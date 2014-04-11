@@ -44,8 +44,10 @@ class lineup:
 		print "Turnovers:", self.turnovers
 		print "Possessions:", self.possessions
 		print "Defensive Possessions:", self.defpossessions
-		# if self.possessions != 0:
-		# 	print "OffRating:", long((self.pointsFor)/(self.possessions))
+		if self.possessions != 0:
+			print "OffRating:", 100*(float(self.pointsFor)/float(self.possessions))
+		if self.defpossessions != 0:
+			print "DefRating:", 100*(float(self.pointsAgainst)/float(self.defpossessions))
 	def getAssistRate(self):
 		return (self.assists)/(self.possessions)
 	def getReboundRate(self):
@@ -87,4 +89,5 @@ class lineup:
 		self.fouls += 1
 	def addDefPossession(self):
 		self.defpossessions += 1
+
 
