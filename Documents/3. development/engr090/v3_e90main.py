@@ -646,6 +646,7 @@ def firstQuarterTracking(pbpRows, time, start, end, players1, players2,
 
   addLineTime(masterLines, curLine1, curLine2, team1, team2, timeRemaining)
 
+
 def main():
 
 # begin storing lineups

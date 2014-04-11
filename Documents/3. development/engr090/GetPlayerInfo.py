@@ -7,23 +7,6 @@ import urllib
 import re
 
 
-def getPlayerIn(string, players1, players2):
-  lookHere = ((len(string))/2) + 5
-  for player in players1:
-    if player in string[:lookHere]:
-      return player
-  for player in players2:
-    if player in string[:lookHere]:
-      return player
-
-def getPlayerOut(string, players1, players2):
-  lookHere = ((len(string))/2) - 5
-  for player in players1:
-    if player in string[lookHere:]:
-      return player
-  for player in players2:
-    if player in string[lookHere:]:
-      return player
 
 def getNameInBoxScore(string):
   for i in range(len(string)):
@@ -77,7 +60,6 @@ def getPlayersAndStarters(soup, players1, players2,
   for player in starters2:
     players2.insert(0, player)
 
-  print players1, players2
   return players1, players2, starters1, starters2, 0, 0
 
 def getSubs(row, players1, players2, curLine1, curLine2):
@@ -181,45 +163,6 @@ def lineupStorage():
   masterLines[28].append("UTA")
   masterLines[29].append("WAS")
 
-# once we know who starts each quarter, this will track all changes
-def getLineChanges(pbpRows, start, end, players1,
-                   players2, curLine1, curLine2):
-
-  for i in range(start, end):
-    play = pbpRows[i]
-
-    if isSub(pbpRows[i]):
-      curLine1, curLine2 = getSubs(pbpRows[i], players1,
-                                   players2, curLine1, curLine2)
-
-    elif isStat(play, "rebound"):
-      rebs = getRebound(play, curLine2)
-
-    elif isStat(play, "makes"):
-      getScore(play, curLine2, curLine1)
-
-    elif isStat(play, "foul"):
-      #Might need to account for technicals and double technicals
-      getFoul(play)
-
-    elif isStat(play, "misses"):
-      getShot(play, curLine2, curLine1)
-
-    elif isTurnover(play):
-      getTurnover(play, curLine2)
-
-    elif isStat(play, "blocks"):
-      getBlock(play, curLine2)
-
-    # else:
-    #   print play
-
-
-  curLine1.sort()
-  curLine2.sort()
-
-  return curLine1, curLine2
-
 def getInfo(soup, p1, p2):
   
   master = []
@@ -227,10 +170,35 @@ def getInfo(soup, p1, p2):
     master.append(i)
   for i in p2:
     master.append(i)
-  #Finds the Height, Weight and Position
-  results = soup.find('ul', attrs={'class' : 'general-info'})
-  for ultag in results:
-    print ultag.text
+
+  number = ""
+  position = ""
+  PTM3 = 0
+  PTA3 = 0
+  threePerc = 0
+
+  #Find number, position, height and weight of the player
+  numpos = soup.find('li', attrs={'class' : 'first'})
+  text = numpos.text
+  count = 0
+  for i in range(len(text)):
+    if text[i] == " ":
+      number = text[1:i]
+      position = text[i+1:]
+    i += 1
+  hw = numpos.find_next('li')
+  text2 = hw.text
+  single = text2.find("'")
+  double = text2.find('"')
+  lbs = text2.find("lbs")
+  feet = int(text2[:single])
+  inches = int(text2[single+1:double])
+  height = feet*12 + inches
+  weight = int(text2[double+3:lbs-1])
+
+  print number
+  print position
+  print height, "inches,", weight, "lbs."
 
   #Find Shooting Numbers
   count = 0
@@ -239,16 +207,23 @@ def getInfo(soup, p1, p2):
     if "Regular Season" in check:
       for col in row.find_all("td"):
         if count == 5:
-          print "3PTM - 3PTA:", col.text
+          threes = col.text
+          for i in range(len(threes)):
+            if threes[i] == "-":
+              PTM3 = threes[:i]
+              PTA3 = threes[i+1:]
         if count == 6:
-          print "3PT%:", col.text
+          perc = float(col.text)
+          threePerc = perc*100
         count += 1
 
+  print PTM3
+  print PTA3
+  print threePerc
 def getPlayerID(soup, players1, players2):
   links = soup.findAll('a', href=re.compile('http://espn.go.com/nba/player/_/id/'))
   cleanLinks = []
   for i in links:
-    print i['href']
     cleanLinks.append(i['href'])
 
   for i in cleanLinks:
@@ -257,44 +232,6 @@ def getPlayerID(soup, players1, players2):
 
 
 
-def getQuarterStarters(pbpRows, start, end, players1, players2):
-
-  # a list of players who could not have been in the quarter first
-  notInFirst, qStarters1, qStarters2 = ([] for i in range(3))
-
-  for i in range(start, end):
-
-    # if there is a sub in the quarter, need to keep track of some things
-    if isSub(pbpRows[i]):
-      playerOut = getPlayerOut(pbpRows[i], players1, players2)
-      playerIn = getPlayerIn(pbpRows[i], players1, players2)
-
-      if playerOut in players1:
-        notInFirst.append(playerIn)
-        if playerOut not in notInFirst and playerOut not in qStarters1:
-          qStarters1.append(playerOut)
-
-      elif playerOut in players2:
-        notInFirst.append(playerIn)
-        if playerOut not in notInFirst and playerOut not in qStarters2:
-          qStarters2.append(playerOut)
-
-    # by looking at who's in the action, build out who started the quater
-    else:
-      for player in players1:
-        if player in pbpRows[i] and player not in notInFirst:
-          if player not in qStarters1:
-            qStarters1.append(player)
-
-      for player in players2:
-        if player in pbpRows[i] and player not in notInFirst:
-          if player not in qStarters2:
-            qStarters2.append(player)
-
-  qStarters1.sort()
-  qStarters2.sort()
-
-  return qStarters1, qStarters2
 
 def main():
 
