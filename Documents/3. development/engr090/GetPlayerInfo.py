@@ -180,7 +180,6 @@ def getInfo(soup, p1, p2):
   #Find number, position, height and weight of the player
   numpos = soup.find('li', attrs={'class' : 'first'})
   text = numpos.text
-  count = 0
   for i in range(len(text)):
     if text[i] == " ":
       number = text[1:i]
@@ -196,9 +195,10 @@ def getInfo(soup, p1, p2):
   height = feet*12 + inches
   weight = int(text2[double+3:lbs-1])
 
+  print
   print number
   print position
-  print height, "inches,", weight, "lbs."
+  print feet, inches, "(", height, "inches),", weight, "lbs."
 
   #Find Shooting Numbers
   count = 0
@@ -217,14 +217,20 @@ def getInfo(soup, p1, p2):
           threePerc = perc*100
         count += 1
 
-  print PTM3
-  print PTA3
-  print threePerc
+  # print PTM3
+  # print PTA3
+  # print threePerc
+  return
+
 def getPlayerID(soup, players1, players2):
   links = soup.findAll('a', href=re.compile('http://espn.go.com/nba/player/_/id/'))
   cleanLinks = []
   for i in links:
-    cleanLinks.append(i['href'])
+    clean = i['href']
+    begin = clean.find("player") + 7
+    newlink = clean[:begin] + "stats/" + clean[begin:]
+    cleanLinks.append(newlink)
+    cleanLinks.sort()
 
   for i in cleanLinks:
     soupy = getSoup(i)
@@ -247,6 +253,9 @@ def main():
                                                   masterLines)
 
 # initialize players and starters lists using box score data
+  print players1
+  print players2
+  print
   getPlayerID(boxScoreSoup, players1, players2)
 
   # infoSoup = getSoup("http://espn.go.com/nba/player/_/id/3244/thaddeus-young")
